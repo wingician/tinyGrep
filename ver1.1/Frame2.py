@@ -1,0 +1,224 @@
+#Boa:Frame:Frame2
+
+import wx
+import os.path
+import time
+import sys, os
+#reload(sys)
+#sys.setdefaultencoding('SHIFT_JIS')
+import win32com.client
+import win32api
+import string
+import re
+
+import wx
+
+import Frame2
+
+modules ={'Frame2': [1, 'Main frame of Application', u'Frame2.py']}
+
+class BoaApp(wx.App):
+    def OnInit(self):
+        self.main = Frame2.create(None)
+        self.main.Show()
+        self.SetTopWindow(self.main)
+        return True
+
+def main():
+    application = BoaApp(0)
+    application.MainLoop()
+
+if __name__ == '__main__':
+    main()
+
+
+
+def create(parent):
+    return Frame2(parent)
+
+[wxID_FRAME2, wxID_FRAME2BUTTON1, wxID_FRAME2DIRPICKERCTRL1, 
+ wxID_FRAME2RADIOBUTTON1, wxID_FRAME2RADIOBUTTON2, wxID_FRAME2RADIOBUTTON3, 
+ wxID_FRAME2RADIOBUTTON4, wxID_FRAME2STATICTEXT1, wxID_FRAME2STATICTEXT2, 
+ wxID_FRAME2TEXTCTRL1, 
+] = [wx.NewId() for _init_ctrls in range(10)]
+
+class Frame2(wx.Frame):
+    
+    def __init__(self, parent):
+        self._init_ctrls(parent)
+
+    def _init_ctrls(self, prnt):
+        # generated method, don't edit
+        wx.Frame.__init__(self, id=wxID_FRAME2, name='', parent=prnt,
+              pos=wx.Point(443, 255), size=wx.Size(406, 354),
+              style=wx.DEFAULT_FRAME_STYLE, title=u'Tiny Grep')
+        self.SetClientSize(wx.Size(390, 316))
+        self.SetBackgroundColour(wx.Colour(235, 235, 235))
+        self.SetBackgroundStyle(wx.BG_STYLE_COLOUR)
+        self.SetAutoLayout(True)
+
+        self.textCtrl1 = wx.TextCtrl(id=wxID_FRAME2TEXTCTRL1, name='textCtrl1',
+              parent=self, pos=wx.Point(26, 76), size=wx.Size(238, 140),
+              style=wx.TE_MULTILINE, value='')
+
+        self.staticText1 = wx.StaticText(id=wxID_FRAME2STATICTEXT1,
+              label=u'\u6587\u5b57\u5217\uff08\u8907\u6570\u306e\u5834\u5408\u3001\u6539\u884c\u5165\u529b\u304f\u3060\u3055\u3044\u3002\uff09',
+              name='staticText1', parent=self, pos=wx.Point(24, 48),
+              size=wx.Size(240, 19), style=0)
+
+        self.button1 = wx.Button(id=wxID_FRAME2BUTTON1, label=u'\u691c\u7d22',
+              name='button1', parent=self, pos=wx.Point(264, 248),
+              size=wx.Size(88, 32), style=0)
+        self.button1.Bind(wx.EVT_BUTTON, self.OnButton1Button,
+              id=wxID_FRAME2BUTTON1)
+
+        self.staticText2 = wx.StaticText(id=wxID_FRAME2STATICTEXT2,
+              label=u'\u5834\u6240\uff1a', name='staticText2', parent=self,
+              pos=wx.Point(24, 224), size=wx.Size(36, 19), style=0)
+
+        self.dirPickerCtrl1 = wx.DirPickerCtrl(id=wxID_FRAME2DIRPICKERCTRL1,
+              message='Select a folder', name='dirPickerCtrl1', parent=self,
+              path='', pos=wx.Point(24, 248),
+              style=wx.DIRP_CHANGE_DIR|wx.DIRP_USE_TEXTCTRL)
+
+        self.radioButton1 = wx.RadioButton(id=wxID_FRAME2RADIOBUTTON1,
+              label=u'ALL', name='radioButton1', parent=self, pos=wx.Point(280,
+              96), size=wx.Size(105, 18), style=0)
+        self.radioButton1.SetValue(True)
+
+        self.radioButton2 = wx.RadioButton(id=wxID_FRAME2RADIOBUTTON2,
+              label=u'JSP Only', name='radioButton2', parent=self,
+              pos=wx.Point(280, 128), size=wx.Size(105, 18), style=0)
+        self.radioButton2.SetValue(False)
+
+        self.radioButton3 = wx.RadioButton(id=wxID_FRAME2RADIOBUTTON3,
+              label=u'Cobol Only', name='radioButton3', parent=self,
+              pos=wx.Point(280, 192), size=wx.Size(105, 18), style=0)
+        self.radioButton3.SetValue(False)
+
+        self.radioButton4 = wx.RadioButton(id=wxID_FRAME2RADIOBUTTON4,
+              label=u'SHL Only', name='radioButton4', parent=self,
+              pos=wx.Point(280, 160), size=wx.Size(105, 18), style=0)
+        self.radioButton4.SetValue(False)
+
+    def OnAbout(self, event):
+        dialog = wx.MessageDialog(self, 'A Tiny grep tools\n'
+            'in wxPython', 'About Tiny Grep', wx.OK)
+        dialog.ShowModal()
+        dialog.Destroy()
+
+    def OnExit(self, event):
+        self.Close()  # Close the main window.
+                
+        
+    def OnButton1Button(self, event):
+        #let grep key word in file
+        keywords = self.textCtrl1.GetValue().encode('SHIFT_JIS')
+        fkeyword = open('grepKeyWord.txt', 'w')      #open keywordfile 
+        fkeyword.write(keywords)
+        fkeyword.close()
+        
+        #and open key word file (because jp encoding problom.)
+        keywordlist = open('grepKeyWord.txt','r') 
+        
+        #search target path
+        searchdir = self.dirPickerCtrl1.GetPath()
+        
+        #result in excel file
+        Application = win32com.client.Dispatch("Excel.Application")  #out put file
+        Application.Visible = 1
+        WorkBook = Application.Workbooks.Add()
+        Base = WorkBook.ActiveSheet
+        Base.Cells(1,1).Value = 'No'
+        Base.Cells(1,2).Value = 'Grep Key'
+        Base.Cells(1,3).Value = 'PGM ID'
+        Base.Cells(1,4).Value = 'PGM Path'
+        Base.Cells(1,5).Value = 'Src'    
+        count = 0
+        
+        #search file types.
+        if self.radioButton2.Value:
+            grepType0 = 'jsp'
+            grepType1 = 'inc'
+    
+        if self.radioButton3.Value:
+            grepType0 = 'pco'
+            grepType1 = 'cpy'
+         
+                
+        if self.radioButton4.Value:
+            grepType0 = 'csh'
+            grepType1 = 'sql'
+                            
+    
+        for gkey in keywordlist:
+            if gkey !='':
+                gkey = gkey.lower()
+                gkey = gkey.strip()
+                keyword = gkey
+                for (dirname, dirs, files) in os.walk(searchdir):
+                    for filename in files:
+                        if self.radioButton1.Value:
+                            thefile = os.path.join(dirname,filename)
+                            in_file = open(thefile,'r')
+                            for line in in_file:
+                                lineout = line.strip()
+                                line = line.lower()
+                                line = line.strip()
+                                #if re.search(gkey, line) :    
+                                if line.find(gkey) != -1:
+                                    count = count + 1
+                                    Base.Cells(count+1,1).Value = "'" + str(count)
+                                    Base.Cells(count+1,2).Value = "'" + keyword
+                                    Base.Cells(count+1,3).Value = "'" + filename
+                                    Base.Cells(count+1,4).Value = "'" + dirname
+                                    Base.Cells(count+1,5).Value = "'" + lineout
+                            in_file.close()
+                        else:
+                            if filename.endswith(grepType0) :
+                                thefile = os.path.join(dirname,filename)
+                                in_file = open(thefile,'r')
+                                for line in in_file:
+                                    lineout = line.strip()
+                                    line = line.lower()
+                                    line = line.strip()
+                                    #if re.search(gkey, line) :    
+                                    if line.find(gkey) != -1:                                        
+                                        count = count + 1
+                                        Base.Cells(count+1,1).Value = "'" +  str(count)
+                                        Base.Cells(count+1,2).Value = "'" +  keyword
+                                        Base.Cells(count+1,3).Value = "'" +  filename
+                                        Base.Cells(count+1,4).Value = "'" +  dirname
+                                        Base.Cells(count+1,5).Value = "'" + lineout
+                                in_file.close()
+                            else:
+                                if filename.endswith(grepType1) :
+                                    thefile = os.path.join(dirname,filename)
+                                    in_file = open(thefile,'r')
+                                    for line in in_file:
+                                        lineout = line.strip()
+                                        line = line.lower()
+                                        line = line.strip()
+                                        #if re.search(gkey, line) :
+                                        if line.find(gkey) != -1:                                            
+                                            count = count + 1
+                                            Base.Cells(count+1,1).Value = "'" +  str(count)
+                                            Base.Cells(count+1,2).Value = "'" +  keyword
+                                            Base.Cells(count+1,3).Value = "'" +  filename
+                                            Base.Cells(count+1,4).Value = "'" +  dirname
+                                            Base.Cells(count+1,5).Value = "'" +  lineout
+                                    in_file.close()
+                                                        
+        dialog = wx.MessageDialog(self, 'Grep Completed!\n Show Results in Excel File.'
+            '', 'Tiny Grep ^-^', wx.OK)
+        dialog.ShowModal()
+        dialog.Destroy()
+            
+
+
+        pass
+
+    def OndirPickerCtrl1Button(self, event):
+        event.Skip()
+      
+  

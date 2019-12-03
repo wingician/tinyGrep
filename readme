@@ -1,0 +1,17 @@
+tiny grep 2.0
+1.0时能够搜索了文本文件
+2.0开始开辟搜索word文件，主要是docx文件。
+暂时未把1.0的功能整合进来。
+1.0采用wxpython的gui开发，
+2.0采用了tkinter的gui开发。
+
+docx利用了python-docx插件读取docx文件。但是无法读取doc文件
+如果要一并读取的话，需要利用python里用word打开doc文件，另存成docx的临时文件，
+搜索，然后在关闭。此功能还没有实装。
+现在2.0版本的搜索结果也还没有写成文件出力，仅仅在python的命令行里print。
+因为找到了其他检索的现成工具，所以暂时停止这个项目。
+
+-tinyGrepdoc.py 2。0工具
+-getAllwordtext.py 用于公司文件搜索，可以把所有的docx文件出力成一个text文件
+-saveasdocx.py  把doc文件保存为docx
+-findbook.py   在一个文本文件里把包含的带有书名号的部分截取下来。
